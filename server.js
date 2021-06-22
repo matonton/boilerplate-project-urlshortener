@@ -27,12 +27,12 @@ app.use(cors());
 app.use('/public', express.static(`${process.cwd()}/public`));
 
 
-app.get('/', function(req, res) {
+app.get('/', function (req, res) {
   res.sendFile(process.cwd() + '/views/index.html');
 });
 
 // You can POST a URL to /api/shorturl and get a JSON response with original_url and short_url properties. Here's an example: { original_url : 'https://freeCodeCamp.org', short_url : 1}
-app.post('/api/shorturl', urlencodedParser, function(req, res) {
+app.post('/api/shorturl', urlencodedParser, function (req, res) {
   // use body-parser to retrieve content of post request
   var url = req.body.url;
   console.log(url);
@@ -40,22 +40,26 @@ app.post('/api/shorturl', urlencodedParser, function(req, res) {
   var regex = /^http(s?)\:\/\/[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*(\/?)/;
   if (!regex.test(url)) res.json({ error: 'invalid url' });
   console.log("valid");
-  var shorty  = Math.floor(Math.random() * (1000 - 1));
+
+  // create the shortened url
+  var shorty = Math.floor(Math.random() * (1000 - 1));
   console.log(shorty);
-  
-  var shortyDb = new ShortUrl ({ original_url: url, new_url: String(shorty) });
+
+  // add url to the MongoDB
+  var shortyDb = new ShortUrl({ original_url: url, new_url: String(shorty) });
   console.log("created new document");
-  
-  shortyDb.save(function(err) {
-      if (err) return console.error(err);
-    });
-    
-    res.json({ original_url: url, short_url: shorty });
+
+  shortyDb.save(function (err) {
+    if (err) return console.error(err);
+  });
+
+  res.json({ original_url: url, short_url: shorty });
 });
 
-// TODO: When you visit /api/shorturl/<short_url>, you will be redirected to the original URL.
-app.get('/api/shorturl/:short_url', function(req, res) {
-  var shorty = ShortUrl.findOne({ new_url: String(req.params.short_url) }, function(err, result) {
+// When you visit /api/shorturl/<short_url>, you will be redirected to the original URL.
+app.get('/api/shorturl/:short_url', function (req, res) {
+  // query the db to see if the url exists
+  var shorty = ShortUrl.findOne({ new_url: String(req.params.short_url) }, function (err, result) {
     if (err) return console.log(err);
     console.log("result" + result);
     if (result._id) res.redirect(result.original_url);
@@ -63,6 +67,6 @@ app.get('/api/shorturl/:short_url', function(req, res) {
   });
 });
 
-app.listen(port, function() {
+app.listen(port, function () {
   console.log(`Listening on port ${port}`);
 });
